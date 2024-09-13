@@ -32,15 +32,37 @@ public class MapPlotter extends JPanel {
     private boolean showGrid = true;
     private GridOverlay gridOverlay;
     private Timer zoomTimer; // Timer for zoom animation
+    private List<CityBoundary> cityBoundaries;
 
     public MapPlotter() {
         loadMapImage();
         initializeLists();
+        initializeCityBoundaries();  // Initialize city boundaries
         readCoordinatesFromCSV("resources/addresses.csv");
         createGridOverlay();
         setupMouseListeners();
         setPreferredSize(new Dimension(mapImage.getWidth(), mapImage.getHeight()));
     }
+
+    private void initializeCityBoundaries() {
+        cityBoundaries = new ArrayList<>();
+
+        // Define boundary for CityA using a polygon with vertices
+        int[] xPointsA = {100, 200, 300, 250, 150};
+        int[] yPointsA = {300, 250, 300, 400, 350};
+        Polygon cityABoundary = new Polygon(xPointsA, yPointsA, xPointsA.length);
+        cityBoundaries.add(new CityBoundary("CityA", cityABoundary));
+
+        // Define boundary for CityB using another polygon with vertices
+        int[] xPointsB = {400, 450, 500, 550, 600};
+        int[] yPointsB = {300, 350, 400, 350, 300};
+        Polygon cityBBoundary = new Polygon(xPointsB, yPointsB, xPointsB.length);
+        cityBoundaries.add(new CityBoundary("CityB", cityBBoundary));
+
+        // Add more city boundaries as needed
+    }
+
+
 
     private void loadMapImage() {
         try {
@@ -56,16 +78,25 @@ public class MapPlotter extends JPanel {
         addresses = new ArrayList<>();
     }
 
+    private Point getCoordinatesForCity(String cityName) {
+        for (CityBoundary boundary : cityBoundaries) {
+            if (boundary.cityName.equalsIgnoreCase(cityName)) {
+                return boundary.getRandomPoint();
+            }
+        }
+        return new Point(0, 0); // Default point if city not found
+    }
+
     private void readCoordinatesFromCSV(String fileName) {
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             reader.readLine(); // Skip header
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split(",");
-                if (data.length != 4) continue;
+                if (data.length != 3) continue;
                 names.add(data[0]);
-                addresses.add(data[1]);
-                coordinates.add(new Point(Integer.parseInt(data[2]), Integer.parseInt(data[3])));
+                addresses.add(data[2]);
+                coordinates.add(getCoordinatesForCity(data[1])); // Get coordinates based on city
             }
         } catch (IOException e) {
             System.out.println("Error reading CSV file.");
@@ -132,12 +163,21 @@ public class MapPlotter extends JPanel {
             gridOverlay.paintComponent(g);
         }
 
+        // Draw the city boundaries
+        drawCityBoundaries(g2d);
+
         if (showPoints) {
             drawPlotPoints(g);
         }
 
         if (showNames) {
             drawNames(g);
+        }
+    }
+
+    private void drawCityBoundaries(Graphics2D g2d) {
+        for (CityBoundary boundary : cityBoundaries) {
+            boundary.drawBoundary(g2d); // Draw each city's boundary
         }
     }
 
@@ -187,7 +227,6 @@ public class MapPlotter extends JPanel {
             }
         };
 
-        // Create the table model and table
         JTable table = new JTable(tableModel);
         table.setFont(new Font("Arial", Font.BOLD, 16));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -201,9 +240,7 @@ public class MapPlotter extends JPanel {
             if (!e.getValueIsAdjusting()) {
                 int row = table.getSelectedRow();
                 if (row >= 0) {
-                    // Map row to the actual index in coordinates list
                     int modelIndex = table.convertRowIndexToModel(row);
-                    // Zoom to the coordinate of the selected row
                     zoomToCoordinate(coordinates.get(modelIndex));
                 }
             }
@@ -213,7 +250,6 @@ public class MapPlotter extends JPanel {
         JPanel searchPanel = new JPanel(new BorderLayout());
         JTextField searchField = new JTextField();
 
-        // Add a document listener to the search field for live filtering
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -240,8 +276,30 @@ public class MapPlotter extends JPanel {
         searchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
         searchPanel.add(searchField, BorderLayout.CENTER);
 
-        // Create a panel for the toggle buttons
+        // Create a panel for the toggle buttons and the grid size slider
         JPanel controlsPanel = new JPanel();
+        controlsPanel.setLayout(new BorderLayout());
+
+        // Create a slider for grid size
+        JSlider gridSizeSlider = new JSlider(JSlider.HORIZONTAL, 10, 100, 50);
+        gridSizeSlider.setMajorTickSpacing(15); // Set major tick spacing to cover the range of values
+        gridSizeSlider.setMinorTickSpacing(5); // Minor tick spacing
+        gridSizeSlider.setPaintTicks(true);
+        gridSizeSlider.setPaintLabels(true);
+        gridSizeSlider.setSnapToTicks(true); // Ensure the slider snaps to ticks
+
+
+        // Add a listener to the slider to update the grid size in real-time
+        gridSizeSlider.addChangeListener(e -> {
+            int newGridSize = gridSizeSlider.getValue();
+            gridOverlay.setGridSize(newGridSize); // Update the grid size in the overlay
+            repaint(); // Ensure the grid is repainted in real-time
+        });
+
+        // Create a sub-panel for toggle buttons and set it to use FlowLayout
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER)); // Set FlowLayout for buttons
+
+        // Create buttons for toggling names, points, and grid
         JButton toggleNamesButton = new JButton("Toggle Names");
         JButton togglePointsButton = new JButton("Toggle Points");
         JButton toggleGridButton = new JButton("Toggle Grid");
@@ -250,9 +308,15 @@ public class MapPlotter extends JPanel {
         togglePointsButton.addActionListener(e -> togglePoints());
         toggleGridButton.addActionListener(e -> toggleGrid());
 
-        controlsPanel.add(toggleNamesButton);
-        controlsPanel.add(togglePointsButton);
-        controlsPanel.add(toggleGridButton);
+        // Add buttons to the button panel
+        buttonPanel.add(toggleNamesButton);
+        buttonPanel.add(togglePointsButton);
+        buttonPanel.add(toggleGridButton);
+
+        // Add components to the controls panel
+        controlsPanel.add(new JLabel("Adjust Grid Size:"), BorderLayout.NORTH);
+        controlsPanel.add(gridSizeSlider, BorderLayout.CENTER);
+        controlsPanel.add(buttonPanel, BorderLayout.SOUTH); // Add button panel to the bottom using FlowLayout
 
         // Add the search panel and table to the main list panel
         listPanel.add(searchPanel, BorderLayout.NORTH);
@@ -262,8 +326,10 @@ public class MapPlotter extends JPanel {
 
         listPanel.add(scrollPane, BorderLayout.CENTER);
         listPanel.add(controlsPanel, BorderLayout.SOUTH);  // Add controls panel to the bottom
+
         return listPanel;
     }
+
 
     private void zoomToCoordinate(Point point) {
         // Define the specific minimum zoom scale

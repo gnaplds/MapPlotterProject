@@ -6,7 +6,7 @@ import java.awt.*;
 class GridOverlay extends JPanel {
     private int width;
     private int height;
-    private int gridSize = 50; // Size of each grid cell
+    private int gridSize = 50; // Default grid size
 
     public GridOverlay(int width, int height) {
         this.width = width;
@@ -33,5 +33,11 @@ class GridOverlay extends JPanel {
             g2d.drawLine(0, y, width, y);
             g2d.drawString(Integer.toString(y), 5, y - 5); // Label the y value
         }
+    }
+
+    // Method to update the grid size
+    public void setGridSize(int gridSize) {
+        this.gridSize = gridSize;
+        repaint(); // Redraw the grid with the new size
     }
 }

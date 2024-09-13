@@ -1,5 +1,5 @@
-Name,Latitude,Longitude
-Gene,Street 1,660,330
-Patricia,Street 2,760,220
-Louis,Street 3,750,450
-Emmanuel,Street 4,670,170
+Name,City,Address
+Gene,CityA,Street 1
+Patricia,CityB,Street 2
+Louis,CityA,Street 3
+Emmanuel,CityB,Street 4
