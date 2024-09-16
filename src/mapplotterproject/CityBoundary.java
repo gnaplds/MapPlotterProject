@@ -1,16 +1,19 @@
 package mapplotterproject;
 
+import interfaces.CityBoundaryInterface;
+
 import java.awt.*;
 
-public class CityBoundary {
-    String cityName;
-    Polygon boundaryPolygon;
+public class CityBoundary implements CityBoundaryInterface {
+    private String cityName;
+    private Polygon boundaryPolygon;
 
     public CityBoundary(String cityName, Polygon boundaryPolygon) {
         this.cityName = cityName;
         this.boundaryPolygon = boundaryPolygon;
     }
 
+    @Override
     public Point getRandomPoint() {
         Rectangle bounds = boundaryPolygon.getBounds();
         int x, y;
@@ -21,9 +24,15 @@ public class CityBoundary {
         return new Point(x, y);
     }
 
+    @Override
     public void drawBoundary(Graphics2D g) {
         g.setColor(Color.RED);
         g.setStroke(new BasicStroke(2));  // Thicker red outline
         g.drawPolygon(boundaryPolygon);   // Draw the polygon boundary
+    }
+
+    @Override
+    public String getCityName() {
+        return cityName;
     }
 }

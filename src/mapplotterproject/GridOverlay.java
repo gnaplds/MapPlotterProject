@@ -1,43 +1,50 @@
 package mapplotterproject;
 
-import javax.swing.*;
-import java.awt.*;
+// GridOverlay.java
+import interfaces.GridOverlayInterface;
 
-class GridOverlay extends JPanel {
-    private int width;
-    private int height;
-    private int gridSize = 50; // Default grid size
+import java.awt.*;
+import javax.swing.*;
+
+public class GridOverlay extends JPanel implements GridOverlayInterface {
+    private int gridSize;
 
     public GridOverlay(int width, int height) {
-        this.width = width;
-        this.height = height;
-        setOpaque(false); // Make sure it doesn't obscure the map
+        setSize(new Dimension(width, height));
+        setOpaque(false);
+        this.gridSize = 50; // default grid size
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        drawGrid((Graphics2D) g);
+    }
 
-        Graphics2D g2d = (Graphics2D) g;
+    private void drawGrid(Graphics2D g2d) {
         g2d.setColor(Color.BLACK);
         g2d.setStroke(new BasicStroke(1));
-
-        // Draw vertical lines
+        int width = getWidth();
+        int height = getHeight();
         for (int x = 0; x <= width; x += gridSize) {
             g2d.drawLine(x, 0, x, height);
             g2d.drawString(Integer.toString(x), x + 5, 15); // Label the x value
         }
-
-        // Draw horizontal lines
         for (int y = 0; y <= height; y += gridSize) {
             g2d.drawLine(0, y, width, y);
             g2d.drawString(Integer.toString(y), 5, y - 5); // Label the y value
         }
     }
 
-    // Method to update the grid size
-    public void setGridSize(int gridSize) {
-        this.gridSize = gridSize;
-        repaint(); // Redraw the grid with the new size
+    @Override
+    public void setGridSize(int size) {
+        this.gridSize = size;
+        repaint(); // Ensure grid is redrawn with new size
+    }
+
+    @Override
+    public void setSize(Dimension dimension) {
+        super.setSize(dimension);
+        repaint(); // Ensure the panel is repainted when size changes
     }
 }
