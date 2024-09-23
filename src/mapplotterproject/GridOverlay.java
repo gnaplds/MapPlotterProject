@@ -1,22 +1,20 @@
-package mapplotterproject;
-
 // GridOverlay.java
-import interfaces.GridOverlayInterface;
+package mapplotterproject;
 
 import java.awt.*;
 import javax.swing.*;
 
-public class GridOverlay extends JPanel implements GridOverlayInterface {
+public class GridOverlay extends JPanel {
     private int gridSize;
 
     public GridOverlay(int width, int height) {
         setSize(new Dimension(width, height));
         setOpaque(false);
-        this.gridSize = 50; // default grid size
+        this.gridSize = 75; // Default grid size
     }
 
     @Override
-    public void paintComponent(Graphics g) {
+    protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         drawGrid((Graphics2D) g);
     }
@@ -26,25 +24,29 @@ public class GridOverlay extends JPanel implements GridOverlayInterface {
         g2d.setStroke(new BasicStroke(1));
         int width = getWidth();
         int height = getHeight();
+
+        // Draw vertical lines and label them with x-coordinates
         for (int x = 0; x <= width; x += gridSize) {
             g2d.drawLine(x, 0, x, height);
-            g2d.drawString(Integer.toString(x), x + 5, 15); // Label the x value
+            g2d.drawString(Integer.toString(x), x + 5, 15);
         }
+
+        // Draw horizontal lines and label them with y-coordinates
         for (int y = 0; y <= height; y += gridSize) {
             g2d.drawLine(0, y, width, y);
-            g2d.drawString(Integer.toString(y), 5, y - 5); // Label the y value
+            g2d.drawString(Integer.toString(y), 5, y - 5);
         }
     }
 
-    @Override
+    // No @Override here; this is a new method
     public void setGridSize(int size) {
         this.gridSize = size;
-        repaint(); // Ensure grid is redrawn with new size
+        repaint();
     }
 
     @Override
     public void setSize(Dimension dimension) {
         super.setSize(dimension);
-        repaint(); // Ensure the panel is repainted when size changes
+        repaint();
     }
 }
