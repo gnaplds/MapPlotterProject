@@ -11,36 +11,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MapPlotter extends JPanel {
+    // Class variables
     private BufferedImage mapImage;
     private List<Point> coordinates;
-    private List<String> names;
-    private List<String> addresses;
-    private List<String> cities;
-    private boolean showNames = false;
-    private boolean showPoints = true;
-    private boolean showGrid = true;
-    private boolean showBoundaries = true;
-    private boolean showCoordinates = true;
+    private List<String> names, addresses, cities;
+    private boolean showNames, showPoints, showGrid, showBoundaries, showCoordinates;
     private Point highlightedPoint;
     private GridOverlay gridOverlay;
-    private double scale;
     private MapInteractionHandler interactionHandler;
     private CityBoundaryManager cityBoundaryManager;
 
+    // Constructor
     public MapPlotter() {
-        loadMapImage();
-        initializeLists();
-        cityBoundaryManager = new CityBoundaryManager();
-        readCoordinatesFromCSV("resources/addresses.csv");
-        createGridOverlay();
-        interactionHandler = new MapInteractionHandler(this, 1.0, 0.5, 3.0);
+        initializeComponents();
+        loadData();
+        setupInteraction();
         setPreferredSize(new Dimension(mapImage.getWidth(), mapImage.getHeight()));
     }
 
-    public JPanel createListPanel() {
-        return new ListPanel(names, addresses, coordinates, cities, this, gridOverlay);
+    // Initialize components
+    private void initializeComponents() {
+        loadMapImage();
+        initializeLists();
+        cityBoundaryManager = new CityBoundaryManager();
+        createGridOverlay();
+
+        // Set initial visibility states
+        showPoints = showGrid = showBoundaries = showCoordinates = true;
+        showNames = false;
     }
 
+    // Load map image
     private void loadMapImage() {
         try {
             mapImage = ImageIO.read(new File("resources/caviteMapCity.png"));
@@ -49,6 +50,7 @@ public class MapPlotter extends JPanel {
         }
     }
 
+    // Initialize lists
     private void initializeLists() {
         coordinates = new ArrayList<>();
         names = new ArrayList<>();
@@ -56,15 +58,22 @@ public class MapPlotter extends JPanel {
         cities = new ArrayList<>();
     }
 
-    private Point getCoordinatesForCity(String cityName) {
-        for (CityBoundary boundary : cityBoundaryManager.getCityBoundaries()) {
-            if (boundary.getCityName().equalsIgnoreCase(cityName)) {
-                return boundary.getNextPoint();
-            }
-        }
-        return new Point(0, 0);
+    // Load data from CSV
+    private void loadData() {
+        readCoordinatesFromCSV("resources/addresses.csv");
     }
 
+    // Setup interaction handler
+    private void setupInteraction() {
+        interactionHandler = new MapInteractionHandler(this, 1.0, 0.5, 3.0);
+    }
+
+    // Create grid overlay
+    private void createGridOverlay() {
+        gridOverlay = new GridOverlay(mapImage.getWidth(), mapImage.getHeight());
+    }
+
+    // Read coordinates from CSV file
     private void readCoordinatesFromCSV(String fileName) {
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             reader.readLine(); // Skip header
@@ -83,58 +92,48 @@ public class MapPlotter extends JPanel {
         }
     }
 
-    private void createGridOverlay() {
-        gridOverlay = new GridOverlay(mapImage.getWidth(), mapImage.getHeight());
+    // Get coordinates for a city
+    private Point getCoordinatesForCity(String cityName) {
+        for (CityBoundary boundary : cityBoundaryManager.getCityBoundaries()) {
+            if (boundary.getCityName().equalsIgnoreCase(cityName)) {
+                return boundary.getNextPoint();
+            }
+        }
+        return new Point(0, 0);
     }
 
+    // Create list panel
+    public JPanel createListPanel() {
+        return new ListPanel(names, addresses, coordinates, cities, this, gridOverlay);
+    }
+
+    // Paint component
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
         Graphics2D g2d = (Graphics2D) g;
+        applyTransformations(g2d);
+        drawMapComponents(g2d);
+    }
+
+    // Apply transformations to graphics
+    private void applyTransformations(Graphics2D g2d) {
         g2d.translate(interactionHandler.getOffsetX(), interactionHandler.getOffsetY());
         g2d.scale(interactionHandler.getScale(), interactionHandler.getScale());
-
-        if (mapImage != null) {
-            g2d.drawImage(mapImage, 0, 0, null);
-        }
-
-        if (showGrid) {
-            gridOverlay.paintComponent(g);
-        }
-
-        if (showBoundaries) {
-            cityBoundaryManager.drawBoundaries(g2d);
-        }
-
-        if (showPoints) {
-            drawPlotPoints(g);
-        }
-
-        if (showNames) {
-            drawNames(g);
-        }
-
-        if (showCoordinates) {
-            drawCoordinates(g);
-        }
-
-        if (highlightedPoint != null) {
-            g2d.setColor(Color.BLUE);
-            g2d.fillOval(highlightedPoint.x - 5, highlightedPoint.y - 5, 10, 10);
-        }
     }
 
-    public void highlightSelectedPoint(Point point) {
-        this.highlightedPoint = point;
-        repaint();
+    // Draw map components
+    private void drawMapComponents(Graphics2D g2d) {
+        if (mapImage != null) g2d.drawImage(mapImage, 0, 0, null);
+        if (showGrid) gridOverlay.paintComponent(g2d);
+        if (showBoundaries) cityBoundaryManager.drawBoundaries(g2d);
+        if (showPoints) drawPlotPoints(g2d);
+        if (showNames) drawNames(g2d);
+        if (showCoordinates) drawCoordinates(g2d);
+        if (highlightedPoint != null) drawHighlightedPoint(g2d);
     }
 
-    public void clearHighlightedPoint() {
-        this.highlightedPoint = null;
-        repaint();
-    }
-
+    // Draw plot points
     private void drawPlotPoints(Graphics g) {
         g.setColor(Color.RED);
         for (Point point : coordinates) {
@@ -142,37 +141,45 @@ public class MapPlotter extends JPanel {
         }
     }
 
+    // Draw names
     private void drawNames(Graphics g) {
         g.setColor(Color.RED);
         g.setFont(new Font("Arial", Font.PLAIN, 14));
         for (int i = 0; i < coordinates.size(); i++) {
             Point point = coordinates.get(i);
-            String name = names.get(i);
-            g.drawString(name, point.x + 10, point.y);
+            g.drawString(names.get(i), point.x + 10, point.y);
         }
     }
 
+    // Draw coordinates
     private void drawCoordinates(Graphics g) {
         Point mouseCoords = interactionHandler.getMouseCoordinates();
         g.setColor(Color.BLACK);
         g.setFont(new Font("Arial", Font.BOLD, 14));
-
-        // Draw the coordinates directly above the mouse position
-        int textX = mouseCoords.x + 10; // Offset to the right
-        int textY = mouseCoords.y - 10; // Offset above
-
-        g.drawString("X: " + mouseCoords.x + " Y: " + mouseCoords.y, textX, textY);
+        g.drawString("X: " + mouseCoords.x + " Y: " + mouseCoords.y, mouseCoords.x + 10, mouseCoords.y - 10);
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-        int newWidth = (int) (mapImage.getWidth() * scale);
-        int newHeight = (int) (mapImage.getHeight() * scale);
-        return new Dimension(newWidth, newHeight);
+    // Draw highlighted point
+    private void drawHighlightedPoint(Graphics2D g2d) {
+        g2d.setColor(Color.BLUE);
+        g2d.fillOval(highlightedPoint.x - 5, highlightedPoint.y - 5, 10, 10);
     }
 
+    // Highlight selected point
+    public void highlightSelectedPoint(Point point) {
+        this.highlightedPoint = point;
+        repaint();
+    }
+
+    // Clear highlighted point
+    public void clearHighlightedPoint() {
+        this.highlightedPoint = null;
+        repaint();
+    }
+
+    // Zoom to coordinate
     public void zoomToCoordinate(Point point) {
-        final double minZoomScale = 2.0; // Set desired zoom level
+        final double minZoomScale = 2.0;
         final double startScale = interactionHandler.getScale();
         final double targetScale = Math.min(interactionHandler.getMaxScale(), minZoomScale);
 
@@ -181,6 +188,11 @@ public class MapPlotter extends JPanel {
         final int targetX = (int) (-point.x * targetScale + getWidth() / 2);
         final int targetY = (int) (-point.y * targetScale + getHeight() / 2);
 
+        animateZoom(startScale, targetScale, startX, startY, targetX, targetY);
+    }
+
+    // Animate zoom
+    private void animateZoom(double startScale, double targetScale, int startX, int startY, int targetX, int targetY) {
         final int animationSteps = 30;
         final double scaleStep = (targetScale - startScale) / animationSteps;
         final int xStep = (targetX - startX) / animationSteps;
@@ -196,7 +208,6 @@ public class MapPlotter extends JPanel {
                     return;
                 }
 
-                // Update scale and offset
                 interactionHandler.setScale(startScale + step * scaleStep);
                 interactionHandler.setOffsetX(startX + step * xStep);
                 interactionHandler.setOffsetY(startY + step * yStep);
@@ -209,48 +220,17 @@ public class MapPlotter extends JPanel {
         zoomTimer.start();
     }
 
-    public void toggleNames() {
-        showNames = !showNames;
-        repaint();
-    }
+    // Toggle visibility methods
+    public void toggleNames() { showNames = !showNames; repaint(); }
+    public void togglePoints() { showPoints = !showPoints; repaint(); }
+    public void toggleGrid() { showGrid = !showGrid; repaint(); }
+    public void toggleBoundaries() { showBoundaries = !showBoundaries; repaint(); }
+    public void toggleCoordinates() { showCoordinates = !showCoordinates; repaint(); }
 
-    public void togglePoints() {
-        showPoints = !showPoints;
-        repaint();
-    }
-
-    public void toggleGrid() {
-        showGrid = !showGrid;
-        repaint();
-    }
-
-    public void toggleBoundaries() {
-        showBoundaries = !showBoundaries;
-        repaint();
-    }
-
-    public void toggleCoordinates() {
-        showCoordinates = !showCoordinates;
-        repaint();
-    }
-
-    public boolean isNamesVisible() {
-        return showNames;
-    }
-
-    public boolean isPointsVisible() {
-        return showPoints;
-    }
-
-    public boolean isGridVisible() {
-        return showGrid;
-    }
-
-    public boolean isBoundariesVisible() {
-        return showBoundaries;
-    }
-
-    public boolean isCoordinatesVisible() {
-        return showCoordinates;
-    }
+    // Getter methods for visibility states
+    public boolean isNamesVisible() { return showNames; }
+    public boolean isPointsVisible() { return showPoints; }
+    public boolean isGridVisible() { return showGrid; }
+    public boolean isBoundariesVisible() { return showBoundaries; }
+    public boolean isCoordinatesVisible() { return showCoordinates; }
 }

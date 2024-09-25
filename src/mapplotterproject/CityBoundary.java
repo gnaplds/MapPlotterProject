@@ -1,58 +1,62 @@
-// CityBoundary.java
 package mapplotterproject;
 
 import java.awt.*;
+import java.util.Random;
 
+/**
+ * CityBoundary class
+ * Represents the boundary of a city and provides methods for point generation and boundary drawing.
+ */
 public class CityBoundary {
-    private String cityName;
-    private Polygon boundaryPolygon;
-    private int offsetStep = 20;  // Distance between points
-    private int nextPointIndex = 0; // To track the next point
+    // Class members
+    private final String cityName;
+    private final Polygon boundaryPolygon;
+    private final Random random;
 
+    /**
+     * Constructor for CityBoundary
+     * @param cityName Name of the city
+     * @param boundaryPolygon Polygon representing the city's boundary
+     */
     public CityBoundary(String cityName, Polygon boundaryPolygon) {
         this.cityName = cityName;
         this.boundaryPolygon = boundaryPolygon;
+        this.random = new Random();  // Initialize random generator for point generation
     }
 
-    // Method to get the next point in a spreading grid pattern
+    /**
+     * Generates a random point within the city boundary
+     * @return Point object representing a random point within the boundary
+     */
     public Point getNextPoint() {
-        // Get the bounds of the polygon
+        // Get the bounding rectangle of the polygon
         Rectangle bounds = boundaryPolygon.getBounds();
+        Point randomPoint;
 
-        // Get the center of the polygon
-        int centerX = bounds.x + bounds.width / 2;
-        int centerY = bounds.y + bounds.height / 2;
+        do {
+            // Generate random x and y coordinates within the bounding rectangle
+            int x = bounds.x + random.nextInt(bounds.width);
+            int y = bounds.y + random.nextInt(bounds.height);
+            randomPoint = new Point(x, y);
+        } while (!boundaryPolygon.contains(randomPoint));  // Repeat until a point inside the polygon is found
 
-        // Spread points in a grid pattern from the center
-        int xOffset = (nextPointIndex % 5) * offsetStep;  // Spread horizontally every 5 points
-        int yOffset = (nextPointIndex / 5) * offsetStep;  // Spread vertically after 5 points
-
-        int x = centerX + xOffset;
-        int y = centerY + yOffset;
-
-        // Move to the next point in the sequence
-        nextPointIndex++;
-
-        // Ensure the point is within the boundary
-        while (!boundaryPolygon.contains(x, y)) {
-            xOffset = (nextPointIndex % 5) * offsetStep;  // Update x-offset
-            yOffset = (nextPointIndex / 5) * offsetStep;  // Update y-offset
-            x = centerX + xOffset;
-            y = centerY + yOffset;
-            nextPointIndex++;
-        }
-
-        return new Point(x, y);
+        return randomPoint;
     }
 
-    // Method to draw the boundary of the city
+    /**
+     * Draws the boundary of the city
+     * @param g Graphics2D object for drawing
+     */
     public void drawBoundary(Graphics2D g) {
-        g.setColor(Color.RED);
-        g.setStroke(new BasicStroke(2));
-        g.drawPolygon(boundaryPolygon);
+        g.setColor(Color.RED);  // Set the color for the boundary
+        g.setStroke(new BasicStroke(2));  // Set the line thickness
+        g.drawPolygon(boundaryPolygon);  // Draw the polygon representing the city boundary
     }
 
-    // Getter for the city name
+    /**
+     * Getter for the city name
+     * @return String representing the city name
+     */
     public String getCityName() {
         return cityName;
     }
