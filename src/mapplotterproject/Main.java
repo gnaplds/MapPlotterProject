@@ -14,8 +14,8 @@ public class Main {
             MapPlotter mapPanel = new MapPlotter();
             JPanel listPanel = mapPanel.createListPanel();
 
-            JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mapPanel, listPanel);
-            splitPane.setDividerLocation(1100);
+            JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listPanel, mapPanel);
+            splitPane.setDividerLocation(400);
 
             frame.add(splitPane, BorderLayout.CENTER);
             frame.setSize(1500,800);

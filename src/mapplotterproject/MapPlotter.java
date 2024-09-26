@@ -137,7 +137,7 @@ public class MapPlotter extends JPanel {
     private void drawPlotPoints(Graphics g) {
         g.setColor(Color.RED);
         for (Point point : coordinates) {
-            g.fillOval(point.x - 5, point.y - 5, 10, 10);
+            g.fillOval(point.x - 5, point.y - 5, 5, 5);
         }
     }
 
@@ -162,7 +162,7 @@ public class MapPlotter extends JPanel {
     // Draw highlighted point
     private void drawHighlightedPoint(Graphics2D g2d) {
         g2d.setColor(Color.BLUE);
-        g2d.fillOval(highlightedPoint.x - 5, highlightedPoint.y - 5, 10, 10);
+        g2d.fillOval(highlightedPoint.x - 5, highlightedPoint.y - 5, 5, 5);
     }
 
     // Highlight selected point
