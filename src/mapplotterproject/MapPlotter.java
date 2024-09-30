@@ -37,14 +37,14 @@ public class MapPlotter extends JPanel {
         createGridOverlay();
 
         // Set initial visibility states
-        showPoints = showGrid = showBoundaries = showCoordinates = true;
-        showNames = false;
+        showPoints = showGrid = showCoordinates = true;
+        showNames = showBoundaries = false;
     }
 
     // Load map image
     private void loadMapImage() {
         try {
-            mapImage = ImageIO.read(new File("resources/caviteMapCity.png"));
+            mapImage = ImageIO.read(new File("src/resources/caviteMapCity.png"));
         } catch (IOException e) {
             System.out.println("Map image not found.");
         }
@@ -59,8 +59,15 @@ public class MapPlotter extends JPanel {
     }
 
     // Load data from CSV
-    private void loadData() {
-        readCoordinatesFromCSV("resources/addresses.csv");
+    public void loadData() {
+        names.clear();
+        addresses.clear();
+        cities.clear();
+        coordinates.clear();
+
+        readCoordinatesFromCSV();
+
+        repaint();
     }
 
     // Setup interaction handler
@@ -74,16 +81,16 @@ public class MapPlotter extends JPanel {
     }
 
     // Read coordinates from CSV file
-    private void readCoordinatesFromCSV(String fileName) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+    private void readCoordinatesFromCSV() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("src/resources/addresses.csv"))) {
             reader.readLine(); // Skip header
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split(",");
                 if (data.length != 3) continue;
                 names.add(data[0]);
-                addresses.add(data[2]);
                 cities.add(data[1]);
+                addresses.add(data[2]);
                 coordinates.add(getCoordinatesForCity(data[1]));
             }
         } catch (IOException e) {
