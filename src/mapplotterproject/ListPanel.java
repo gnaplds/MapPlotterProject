@@ -275,12 +275,15 @@ public class ListPanel extends JPanel {
             return;
         }
 
+        // Convert selected row index from view to model
+        int modelRow = table.convertRowIndexToModel(selectedRow);
+
         boolean inputValid = false;
 
         while (!inputValid) {
-            String currentName = tableModel.getValueAt(selectedRow, 0).toString();
-            String currentCity = tableModel.getValueAt(selectedRow, 1).toString();
-            String currentAddress = tableModel.getValueAt(selectedRow, 2).toString();
+            String currentName = tableModel.getValueAt(modelRow, 0).toString();
+            String currentCity = tableModel.getValueAt(modelRow, 1).toString();
+            String currentAddress = tableModel.getValueAt(modelRow, 2).toString();
 
             JTextField nameField = new JTextField(currentName);
             JTextField cityField = new JTextField(currentCity);
@@ -310,9 +313,9 @@ public class ListPanel extends JPanel {
                 JOptionPane.showMessageDialog(null, "All fields must be filled.", "Input Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 inputValid = true;
-                tableModel.setValueAt(newName, selectedRow, 0);
-                tableModel.setValueAt(newCity, selectedRow, 1);
-                tableModel.setValueAt(newAddress, selectedRow, 2);
+                tableModel.setValueAt(newName, modelRow, 0);
+                tableModel.setValueAt(newCity, modelRow, 1);
+                tableModel.setValueAt(newAddress, modelRow, 2);
                 updateCSV(currentName, newName, newCity, newAddress);
                 mapPlotter.loadData();
                 repaint();
@@ -328,7 +331,10 @@ public class ListPanel extends JPanel {
             return;
         }
 
-        String name = tableModel.getValueAt(selectedRow, 0).toString();
+        // Convert selected row index from view to model
+        int modelRow = table.convertRowIndexToModel(selectedRow);
+
+        String name = tableModel.getValueAt(modelRow, 0).toString();
 
         int response = JOptionPane.showConfirmDialog(
                 null,
@@ -339,7 +345,7 @@ public class ListPanel extends JPanel {
         );
 
         if (response == JOptionPane.YES_OPTION) {
-            tableModel.removeRow(selectedRow);
+            tableModel.removeRow(modelRow);
             removeFromCSV(name);
 
             mapPlotter.loadData();
